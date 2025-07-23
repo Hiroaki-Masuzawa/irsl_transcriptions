@@ -1,5 +1,9 @@
 <launch>
+  <arg name="audio_in" default="audio_in" />
+  <arg name="text_out" default="text_out" />
   <node pkg="irsl_transcriptions" type="irsl_transcriptions_node.py" name="irsl_transcriptions" output="screen">
-    <param name="model_name" value="small" />
+    <param name="model_name" value="base" />
+    <remap from="audio_in" to="$(arg audio_in)"/>
+    <remap from="text_out" to="$(arg text_out)"/>
   </node>
 </launch>
