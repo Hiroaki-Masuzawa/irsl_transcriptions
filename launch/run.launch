@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="irsl_transcriptions" type="irsl_transcriptions_node.py" name="irsl_transcriptions" output="screen">
+    <param name="model_name" value="small" />
+  </node>
+</launch>
