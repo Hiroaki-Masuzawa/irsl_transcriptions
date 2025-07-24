@@ -20,17 +20,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git python3-pip python3-catkin-tools \
     && rm -rf /var/lib/apt/lists/*
 
+# pytorch install 
+RUN pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu121 && \
+    pip cache purge
 
 # Pythonパッケージのインストール
 # whisperはGitHubからインストール、その他依存も
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir \
         git+https://github.com/openai/whisper.git \
-        torchaudio \
         ffmpeg-python \
         python-magic
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir numpy==1.22.4
+    && pip install --no-cache-dir numpy==1.24.4
     
 RUN mkdir -p ${IRSL_WS}/src
 COPY . ${IRSL_WS}/src/${IRSL_PROJECT}/.
