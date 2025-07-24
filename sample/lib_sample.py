@@ -1,4 +1,4 @@
-from irsl_transcriptions.whisper_transcriver import WhisperTranscriber
+from irsl_transcriptions.whisper_transcriber import WhisperTranscriber
 import base64
 
 # https://gist.github.com/juliensalinas/15789d241f28b1ce45f0c22e11ba894a
@@ -12,7 +12,13 @@ def audiopath_to_base64(audio_path):
 if __name__ == '__main__':
     transcriber = WhisperTranscriber(model_size="large") # "base" 
 
+    filename = "001-sibutomo.mp3"
     base64_audio = audiopath_to_base64("001-sibutomo.mp3")
 
     text = transcriber.transcribe_from_base64(base64_audio, language="ja")
     print("Transcription result:", text)
+
+    text = transcriber.transcribe_audio(filename, language="ja")
+    print("Transcription result:", text)
+
+    
