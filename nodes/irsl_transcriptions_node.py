@@ -1,72 +1,77 @@
 #!/usr/bin/env python3
+import re
 
 import rospy
 from std_msgs.msg import String
 
-from irsl_transcriptions.whisper_transcriver import WhisperTranscriber
+from irsl_transcriptions.whisper_transcriber import WhisperTranscriber
+
 
 class IRSLTranscriptionROS:
-    """ROS node for real-time audio transcription using Whisper.
+    """
+    ROS node for real-time audio transcription using Whisper.
 
-    This class initializes a ROS node that subscribes to a topic containing
-    base64-encoded audio data, performs speech transcription using the
-    Whisper model, and publishes the resulting text to a topic.
+    This class subscribes to a topic containing base64-encoded audio data,
+    decodes and transcribes it using the Whisper model, and publishes the
+    resulting text to another topic.
 
     Attributes:
-        transcriber (WhisperTranscriber): An instance of the Whisper transcriber.
-        sub (rospy.Subscriber): Subscriber for input audio data in base64 format.
-        pub (rospy.Publisher): Publisher for output transcribed text.
+        transcriber (WhisperTranscriber): Instance of the Whisper transcriber.
+        sub (rospy.Subscriber): Subscriber for base64 audio input.
+        pub (rospy.Publisher): Publisher for transcribed text output.
     """
 
     def __init__(self):
         """
-        Initializes the transcription ROS node.
+        Initialize the ROS transcription node.
 
-        The Whisper model name is retrieved from the ROS parameter server.
-        Parameter:
-            ~model_name (str): Whisper model to use (default: 'base').
+        Parameters retrieved from the ROS parameter server:
+            ~model_name (str): Whisper model size (default: 'base').
+            ~language (str): Optional language code (e.g., 'en', 'ja').
         """
-        # Initialize the ROS node.
         rospy.init_node('transcription', anonymous=True)
 
-        # Get Whisper model name from ROS parameter
         model_name = rospy.get_param('~model_name', 'base')
+        self.language = rospy.get_param('~language', None)
 
         rospy.loginfo(f"Loading Whisper model: {model_name}")
         self.transcriber = WhisperTranscriber(model_size=model_name)
 
-        # Subscribe to incoming base64-encoded audio messages.
         self.sub = rospy.Subscriber("audio_in", String, self.callback)
-
-        # Publisher to publish the transcribed text.
-        self.pub = rospy.Publisher('text_out', String, queue_size=10)
+        self.pub = rospy.Publisher("text_out", String, queue_size=10)
 
     def callback(self, msg):
-        """Callback function for handling incoming audio data.
+        """
+        Callback function triggered upon receiving audio input.
 
-        This method receives base64-encoded audio from the 'chatter' topic,
-        transcribes it using Whisper, and publishes the transcribed text.
+        Extracts and decodes base64-encoded audio data, performs transcription
+        using Whisper, and publishes the resulting text.
 
         Args:
-            msg (std_msgs.msg.String): The message containing base64-encoded audio.
+            msg (std_msgs.msg.String): Base64-encoded audio message.
         """
         try:
-            # Perform transcription from base64 audio.
             data = msg.data
-            keyword = ',' # data url の分離　exp "data:audio/wav;base64,"
-            if data.find(keyword) != -1:
-                data = data[data.find(keyword)+len(keyword):]
-                
-            text = self.transcriber.transcribe_from_base64(data, language=None)
-            rospy.loginfo(f"Transcription : {text}")
-            # Publish the transcribed text.
+
+            # Handle Data URL scheme (e.g. "data:audio/wav;base64,...")
+            if data.startswith("data:"):
+                match = re.match(r"data:audio/\w+;base64,(.*)", data)
+                if match:
+                    data = match.group(1)
+                else:
+                    rospy.logwarn("Invalid data URL format. Skipping message.")
+                    return
+
+            text = self.transcriber.transcribe_from_base64(data, language=self.language)
+
+            rospy.loginfo(f"Transcription: {text}")
             self.pub.publish(String(data=text))
+
         except Exception as e:
             rospy.logerr(f"Transcription error: {e}")
 
-if __name__ == '__main__':
-    # Create the transcription node with the specified Whisper model.
-    transcription = IRSLTranscriptionROS()
 
-    # Keep the node running and responsive to incoming messages.
+if __name__ == '__main__':
+    # Start the transcription node and keep it alive.
+    transcription = IRSLTranscriptionROS()
     rospy.spin()
