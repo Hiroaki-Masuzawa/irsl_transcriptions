@@ -6,9 +6,15 @@ abs_dir=$(dirname ${abs_script})
 _ROS_IP=${ROS_IP}
 _ROS_HOSTNAME=${ROS_HOSTNAME}
 _ROS_MASTER_URI=${ROS_MASTER_URI}
+_GPU_OPTION=" --gpus all "
+_CACHE_MOUNT=" -v /tmp/irsl_transcriptions_cache:/ros_home/.cache" # whisperの重みのキャッシュ
 
 while [[ $# -gt 0 ]]; do
     case $1 in
+        --no-gpu)
+            _GPU_OPTION=""
+            shift
+            ;;
         --ros-setup)
             _ROS_SETUP="$2"
             shift
@@ -69,7 +75,9 @@ set -x
 
 docker run -it --rm \
 --net host \
+${_GPU_OPTION} \
 ${rosip_option} ${roshostname_option} ${rosmaster_option} \
+${_CACHE_MOUNT} \
 -v ${abs_dir}/..:/userdir \
 -w /userdir \
 --name irsl_transcriptions \
