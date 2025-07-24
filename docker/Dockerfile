@@ -36,7 +36,7 @@ RUN pip install --no-cache-dir --upgrade pip \
     
 RUN mkdir -p ${IRSL_WS}/src
 COPY . ${IRSL_WS}/src/${IRSL_PROJECT}/.
-RUN bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && catkin config --install && IRSL_BUILD_LOCAL=true catkin build"
+RUN bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && catkin config --install && VERBOSE=1 IRSL_BUILD_LOCAL=true catkin build"
 
 
 CMD [ "bash", "-c", "source ${IRSL_WS}/install/setup.bash && roslaunch ${IRSL_PROJECT} run.launch" ]
